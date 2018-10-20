@@ -29,7 +29,7 @@ EXEC = toyMC
 SOURCE_DIR = src
 
 #list here all the source files
-SRC = main.cpp $(SOURCE_DIR)/GeneratingHits.cpp
+SRC = main.cpp $(SOURCE_DIR)/GeneratingHits.cpp $(SOURCE_DIR)/ToyAnalysis.cpp
 
 #A directory for build artefacts
 BUILD_DIR = Build
