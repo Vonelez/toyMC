@@ -15,12 +15,12 @@ using namespace std;
 
 class ToyAnalysis {
  public:
-  ToyAnalysis(TH2D* ToyVShape);
+  ToyAnalysis(TH2D* ToyVShape, Int_t binning);
   virtual ~ToyAnalysis();
 
  private:
   TH2D* inputToyVShape;
-
+  Int_t binning;
   Double_t xAxisPoint;
   Double_t yAxisPoint;
   Double_t xAxisPointError;
@@ -66,6 +66,7 @@ class ToyAnalysis {
   virtual void bins_filling(Int_t i);
   virtual void finding_fit_range(Double_t axisPoint);
   virtual void fitting_bin_hist();
+  virtual void getFWHM();
   virtual void finding_range();
   virtual void main_algorithm(Int_t start, Int_t end);
   virtual void geometric_resol();

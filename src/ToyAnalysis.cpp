@@ -1,6 +1,7 @@
 
 #include "../include/ToyAnalysis.h"
-ToyAnalysis::ToyAnalysis(TH2D* ToyVShape) {
+ToyAnalysis::ToyAnalysis(TH2D* ToyVShape, Int_t binning) {
+  this->binning = binning;
   inputToyVShape = (TH2D *)ToyVShape->Clone();
   init();
   main_algorithm(inputToyVShape->FindFirstBinAbove(), inputToyVShape->FindLastBinAbove());
@@ -45,8 +46,8 @@ void ToyAnalysis::init() {
   NDF->GetYaxis()->SetTitle("NDF");
   derivative_gr = new TGraphErrors();
   derivative_gr->GetXaxis()->SetTitle("U (mm)");
-  derivative_gr->GetYaxis()->SetTitle("#frac{df(U)}{dU}");
-  derivative_gr->SetTitle("#frac{df(U)}{dU} = f(U)");
+  derivative_gr->GetYaxis()->SetTitle("F'");
+  derivative_gr->SetTitle("F' = f(U)");
 }
 
 void ToyAnalysis::bins_filling(Int_t i) {
@@ -101,6 +102,17 @@ void ToyAnalysis::fitting_bin_hist() {
   fit = gMinuit->fCstatu;
 }
 
+void ToyAnalysis::getFWHM() {
+  Int_t bin1 = binProjection->FindFirstBinAbove(binProjection->GetMaximum()/2);
+  Int_t bin2 = binProjection->FindLastBinAbove(binProjection->GetMaximum()/2);
+  sigma = binProjection->GetBinCenter(bin2) - binProjection->GetBinCenter(bin1);
+//  yAxisPoint = binProjection->GetBinCenter(binProjection->GetMaximumBin());
+  yAxisPoint = binProjection->GetMean();
+  yAxisPointError = binProjection->GetMeanError();
+  Int_t binSizeLocal = (binProjection->GetBinCenter(1) - binProjection->GetBinCenter(0)) / 2.;
+  sigmaError = binSizeLocal * sqrt(2);
+}
+
 void ToyAnalysis::finding_range() {
   Int_t N = g->GetN();
   Double_t *x, *y;
@@ -144,10 +156,12 @@ void ToyAnalysis::main_algorithm(Int_t start, Int_t end) {
   Int_t j = 0;
   for (int i = 0; i < end - start; ++i) {
     bins_filling(start + i);
-    if (binProjection->Integral() < 150) continue;
-    finding_fit_range(xAxisPoint);
-    fitting_bin_hist();
-    if (strncmp(fit.Data(), res.Data(), 5) != 0) continue;
+//    if (binProjection->Integral() < 150) continue;
+//    finding_fit_range(xAxisPoint);
+//    fitting_bin_hist();
+//    if (strncmp(fit.Data(), res.Data(), 5) != 0) continue;
+
+    getFWHM();
 
     g->SetPoint(j, xAxisPoint, yAxisPoint);
     g->SetPointError(j, xAxisPointError, yAxisPointError);
@@ -165,16 +179,16 @@ void ToyAnalysis::main_algorithm(Int_t start, Int_t end) {
       binProjection->Draw();
       c1->SaveAs(full, "Q");
     }
-    if (ndf == 0) {
-      CHI_NDF->SetPoint(j, xAxisPoint, 50);
-      NDF->SetPoint(j, xAxisPoint, ndf);
-    } else {
-      Double_t chindf = chi / ndf;
-      CHI_NDF->SetPoint(j, xAxisPoint, chindf);
-      CHI_NDF->SetPoint(j, xAxisPoint, ndf);
-      ndf_vect.push_back(ndf);
+//    if (ndf == 0) {
+//      CHI_NDF->SetPoint(j, xAxisPoint, 50);
+//      NDF->SetPoint(j, xAxisPoint, ndf);
+//    } else {
+//      Double_t chindf = chi / ndf;
+//      CHI_NDF->SetPoint(j, xAxisPoint, chindf);
+//      CHI_NDF->SetPoint(j, xAxisPoint, ndf);
+//      ndf_vect.push_back(ndf);
       straw_coord.push_back(xAxisPoint);
-    }
+//    }
     j++;
   }
 }
@@ -182,14 +196,18 @@ void ToyAnalysis::main_algorithm(Int_t start, Int_t end) {
 void ToyAnalysis::geometric_resol() {
   Double_t *x = Sigma->GetX();
 
-  for (int l = 0; l < ndf_vect.size() - 1; ++l) {
-    if (deriv_max_l == 0 && straw_coord.at(l) > -12.) {
-      if (abs(ndf_vect.at(l) - ndf_vect.at(l+1)) > 15) deriv_max_l = straw_coord.at(l+1);
-    }
-    if (abs(ndf_vect.at(l) - ndf_vect.at(l+1)) > 15 && straw_coord.at(l) > 0) deriv_max_r = straw_coord.at(l);
-  }
-  if (deriv_max_l == 0) deriv_max_l = straw_coord.at(0);
-  if (deriv_max_r == 0) deriv_max_r = straw_coord.back();
+//  for (int l = 0; l < ndf_vect.size() - 1; ++l) {
+//    if (deriv_max_l == 0 && straw_coord.at(l) > -12.) {
+//      if (abs(ndf_vect.at(l) - ndf_vect.at(l+1)) > 15) deriv_max_l = straw_coord.at(l+1);
+//    }
+//    if (abs(ndf_vect.at(l) - ndf_vect.at(l+1)) > 15 && straw_coord.at(l) > 0) deriv_max_r = straw_coord.at(l);
+//  }
+//  if (deriv_max_l == 0) deriv_max_l = straw_coord.at(0);
+//  if (deriv_max_r == 0) deriv_max_r = straw_coord.back();
+
+  deriv_max_l = -9.9;
+  deriv_max_r = 9.9;
+
 
   cout << deriv_max_l << "\n" << deriv_max_r << endl;
 
@@ -207,8 +225,10 @@ void ToyAnalysis::geometric_resol() {
 
   ofstream myfile;
   TString folder("img");
-  TString suf("OUTPUT.txt");
-  TString name = suf;
+  Long_t num = binning;
+  TString nick("OUTPUT_");
+  TString suf(".txt");
+  TString name = nick + num + suf;
   myfile.open(name);
   myfile << "R-L \t C \t \t L \t R \n";
   myfile << deriv_max_r - deriv_max_l << "\t" << deriv_vertex << "+/-" << deriv_vertex_error << "\t" << deriv_max_l << "\t" << deriv_max_r << endl;
@@ -305,8 +325,11 @@ void ToyAnalysis::deriv_calc() {
 }
 
 void ToyAnalysis::writingHists() {
-
-  TFile myfile("output.root", "RECREATE");
+  Long_t num = binning;
+  TString nick("output_");
+  TString suf(".root");
+  TString name = nick + num + suf;
+  TFile myfile(name, "RECREATE");
   g->Write("Parabola");
   gnew->Write("Parabola2");
   Sigma->Write("Sigma(x)");
