@@ -48,6 +48,8 @@ void ToyAnalysis::init() {
   derivative_gr->GetXaxis()->SetTitle("U (mm)");
   derivative_gr->GetYaxis()->SetTitle("F'");
   derivative_gr->SetTitle("F' = f(U)");
+
+  testingGraph = new TGraphErrors();
 }
 
 void ToyAnalysis::bins_filling(Int_t i) {
@@ -109,7 +111,8 @@ void ToyAnalysis::getFWHM() {
 //  yAxisPoint = binProjection->GetBinCenter(binProjection->GetMaximumBin());
   yAxisPoint = binProjection->GetMean();
   yAxisPointError = binProjection->GetMeanError();
-  Int_t binSizeLocal = (binProjection->GetBinCenter(1) - binProjection->GetBinCenter(0)) / 2.;
+  cout << "yError = " << yAxisPointError << endl;
+  Double_t binSizeLocal = (binProjection->GetBinCenter(1) - binProjection->GetBinCenter(0)) / 2.;
   sigmaError = binSizeLocal * sqrt(2);
 }
 
@@ -154,6 +157,12 @@ void ToyAnalysis::main_algorithm(Int_t start, Int_t end) {
 
   xAxisPointError = (second - first) / 2.0;
   Int_t j = 0;
+  TString folder("img/");
+  TString folderName("test_");
+  folderName += binning;
+  TString mkd("mkdir -p ");
+  TString createFolder = mkd + folder + folderName;
+  system(createFolder);
   for (int i = 0; i < end - start; ++i) {
     bins_filling(start + i);
 //    if (binProjection->Integral() < 150) continue;
@@ -169,9 +178,9 @@ void ToyAnalysis::main_algorithm(Int_t start, Int_t end) {
     Sigma->SetPointError(j, xAxisPointError, sigmaError);
     if (j % 10 == 0) {
       TCanvas *c1 = new TCanvas("Test", "Test", 1400, 900);
-      TString folder("img");
-      TString path("/test/h_x_");
-      TString name = folder + path;
+
+      TString histName("/h_x_");
+      TString name = folder + folderName + histName;
       Long_t num = j;
       TString end = {".root"};
       TString full = name + num + end;
@@ -321,6 +330,8 @@ void ToyAnalysis::deriv_calc() {
 
     resolgeom->SetPoint(i-1, x[i], resol);
     resolgeom->SetPointError(i-1, 0., sqrt(resol_error));
+
+    testingGraph->SetPoint(i-1, x[i]+x[i+1], resol*derivative);
   }
 }
 
@@ -339,9 +350,5 @@ void ToyAnalysis::writingHists() {
   NDF->Write("ndf");
   derivative_gr->Write("Derivative");
   straw_resol->Write("Straw_resol");
+  testingGraph->Write("testing");
 }
-
-
-
-
-

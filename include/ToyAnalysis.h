@@ -20,7 +20,7 @@ class ToyAnalysis {
 
  private:
   TH2D* inputToyVShape;
-  Int_t binning;
+  Long_t binning;
   Double_t xAxisPoint;
   Double_t yAxisPoint;
   Double_t xAxisPointError;
@@ -47,6 +47,8 @@ class ToyAnalysis {
   TGraph *NDF;
   TGraphErrors *derivative_gr;
   TGraphErrors *straw_resol;
+
+  TGraphErrors *testingGraph;
 
   Double_t chi, ndf;
   vector<Double_t > derivative_vec;

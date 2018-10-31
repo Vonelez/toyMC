@@ -10,6 +10,6 @@ int main() {
     Int_t binning;
     cin >> binning;
     GeneratingHits *hitsGenerator = new GeneratingHits(numOfParticles, binning);
-    ToyAnalysis *ana = new ToyAnalysis(hitsGenerator->GetToyVShape(), binning);
+    new ToyAnalysis(hitsGenerator->GetToyVShape(), binning);
     return 0;
 }
