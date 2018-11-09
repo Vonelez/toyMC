@@ -24,14 +24,15 @@ void GeneratingHits::randomizeHits(Int_t numOfHits) {
 
   for (int i = 0; i < numOfHits; ++i) {
     uAxisPoints[i] = rand->Uniform(-10.0, 10.0);
-    tAxisPoints[i] = parabolaFunction->Eval(uAxisPoints[i]);
+    Double_t tRealPoint = parabolaFunction->Eval(uAxisPoints[i]);
+    tAxisPoints[i] = rand->Gaus(tRealPoint, 5.0);
   }
 
 }
 
 void GeneratingHits::fillingToyVShape(Int_t binning, Int_t arrayLength, Double_t x[], Double_t y[]) {
   Int_t bins = 22 * 1000 / binning;
-  toyVShape = new TH2D("toyVShape", "toyVShape", bins, -11.0, 11.0, 1100, -100.0, 1000.0);
+  toyVShape = new TH2D("toyVShape", "toyVShape", bins, -11.0, 11.0, 2200, -100.0, 1000.0);
   toyVShape->GetXaxis()->SetTitle("U (mm)");
   toyVShape->GetYaxis()->SetTitle("T (ns)");
 

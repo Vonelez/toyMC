@@ -49,6 +49,7 @@ class ToyAnalysis {
   TGraphErrors *straw_resol;
 
   TGraphErrors *testingGraph;
+  TGraphErrors *sigmaBinning;
 
   Double_t chi, ndf;
   vector<Double_t > derivative_vec;
